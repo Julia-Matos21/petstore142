@@ -1,33 +1,90 @@
-// 0 - nome do pacote 
-
-// 1 - bibliotecas 
-
-
+// 0 - nome do pacote
+ 
+// 1 - bibliotecas
+ 
+import io.restassured.response.Response; // Classe Resposta do REST-assured
+ 
 import org.junit.jupiter.api.Test;
-
-
+ 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+ 
+import static io.restassured.RestAssured.config;
+import static io.restassured.RestAssured.given; // função given
+import static org.hamcrest.Matchers.*;          // Classe de verificadores do Hamcrest
+ 
 // 2 - classe
 public class TestPet {
-    // 2.1 atributos 
-    static String ct = "application/json"; // content - type 
+    // 2.1 atributos
+    static String ct = "application/json"; // content-type
     static String uriPet = "https://petstore.swagger.io/v2/pet";
-
+    static int petId = 378978501;
+ 
     // 2.2 funções e métodos
-    // 2.2.1 funções e métodos comuns /uteis 
-
-    // função de leitura de Json 
-    public static String lerArquivoJson (String arquivoJson){
-        //TODO: completar a leitura do arquivo 
-        //return new String(Files)
-        return null; 
+    // 2.2.1 funções e métodos comuns / uteis
+ 
+    // Função de leitura de Json
+    public static String lerArquivoJson(String arquivoJson) throws IOException{
+        return new String(Files.readAllBytes(Paths.get(arquivoJson)));  
     }
-
+ 
+    // 2.2.2 métodos de teste
     @Test
-    public void testPostPet(){
+    public void testPostPet() throws IOException{
+        // Configura
+ 
         // carregar os dados do arquivo json do pet
-        //TODO: Criar o método Post
-        // String jsonBody = 
-
+        String jsonBody = lerArquivoJson("src/test/resources/json/pet1.json");
+       
+        // começa o teste via REST-assured
+ 
+        given()                                 // Dado que
+            .contentType(ct)                    // o tipo do conteúdo é
+            .log().all()                        // mostre tudo na ida
+            .body(jsonBody)                     // envie o corpo da requisição
+        // Executa    
+        .when()                                 // Quando
+            .post(uriPet)                       // Chamamos o endpoint fazendo post
+        // Valida
+        .then()                                 // Então
+            .log().all()                        // mostre tudo na volta
+            .statusCode(200) // verifique se o status code é 200
+            .body("name", is("Snoopy"))    // verifica se o nome é Snoopy
+            .body("id", is(petId))         // verifique o código do pet
+            .body("category.name", is("cachorro")) // se é cachorro
+            .body("tags[0].name", is("vacinado"))  // se está vacinado
+        ; // fim do given
+ 
     }
-    
+ 
+    @Test
+    public void testGetPet(){
+        // Configura
+        // Entrada - petId que está definido no nível da classe
+        // Saídas / Resultados Esperados
+        String petName = "Snoopy";
+        String categoryName = "cachorro";
+        String tagName = "vacinado";
+       
+        given()
+            .contentType(ct)
+            .log().all()
+            // quando é get ou delete não tem body
+        // Executa
+        .when()
+            .get(uriPet + "/" + petId)  // montar o endpoint da URI/<petId>
+        // Valida
+        .then()
+            .log().all()
+            .statusCode(200)
+            .body("name", is("Snoopy"))    // verifica se o nome é Snoopy
+            .body("id", is(petId))         // verifique o código do pet
+            .body("category.name", is("cachorro")) // se é cachorro
+            .body("tags[0].name", is("vacinado"))  // se está vacinado
+ 
+        ; // fim do given
+    }
+   
+ 
 }
